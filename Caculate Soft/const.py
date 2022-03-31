@@ -1,0 +1,10 @@
+timeCol = "Event time"
+statusCol = "Status"
+messageCol = "Message"
+severityCol = "Severity"
+sourceCol = "Original source"
+machineCol = "Machine"
+unknownCol = "What"
+alarmFolder = './AlarmFiles/'
+outputFolder = './OutputFiles/'
+yeildFolder = './YeildFiles/'
