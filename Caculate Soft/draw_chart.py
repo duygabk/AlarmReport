@@ -1,4 +1,6 @@
 import numpy as np
+import os
+import openpyxl
 from pyecharts import options as opts
 from pyecharts.charts import Bar
 import pandas as pd
@@ -12,7 +14,8 @@ performFileName = 'Performance Of Machine 3-2022.xlsx'
 sheetName = '03.2022'
 
 #month yield summary file
-yeildFileName = 'Ydf.xlsx'
+yeildFileName = 'YieldMonth_Finishing.xlsx'
+yeildSheet = "3-2022"
 
 # to test Bar chart, need return to 2 list: date and performance
 def read_performance():
@@ -45,7 +48,7 @@ def read_performance():
     barChart.render()
 
 def read_yeild():
-    yeildDf = pd.read_excel(yeildFolder + yeildFileName)
+    yeildDf = pd.read_excel(yeildFolder + yeildFileName, sheet_name=yeildSheet)
     yeildDf.fillna(0, inplace=True)
     # cols = yeildDf.columns.tolist()
     # print(yeildDf, cols)
@@ -89,8 +92,13 @@ def performance_yield_by_machine(machineName):
     })
 
     #save to excel file
-    with pd.ExcelWriter(path=outputFolder + "DrawChart.xlsx", mode='a') as f:
+    filePath = outputFolder + "DrawChart.xlsx"
+    #create new file if not exist
+    if os.path.exists(filePath) == False:
+        openpyxl.Workbook().save(filePath)
+    with pd.ExcelWriter(path=filePath, mode='a', if_sheet_exists = 'replace') as f:
         dataSet.to_excel(f, sheet_name=machineName, index=False)
+
     # sns.set(title = machineName)
     sns.set_style('whitegrid')
     sns.lmplot(x ='Performance', y ='Yield', data = dataSet)
