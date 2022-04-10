@@ -9,8 +9,36 @@
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" type="text/css">
     <title>{% block title %} {% endblock %}</title>
+    <style>
+        a.nav-link {
+            margin-left: 10px;
+        }
+    </style>
+    {% block style %} {% endblock %}
 </head>
 <body>
+
+    <!-- Nav Menu -->
+    <nav class="navbar navbar-expand-sm justify-content-center bg-secondary navbar-dark ">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link btn btn-outline-success" href="/dataview">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link btn btn-outline-primary" href="/dataview/loaddata">Caculate O.R</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link btn btn-outline-primary" href="/dataview/yeildmonth">Yeild Month</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link btn btn-outline-info" href="/dataview/summary">Summary</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link btn btn-outline-danger" href="/dataview/chart">Chart</a>
+            </li>
+        </ul>
+    </nav>
+
     {% block content %}
     {% endblock %}
 </body>

@@ -1,12 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>CHART</h1>
-</body>
-</html>
+{% extends 'pages/base.html' %}
+
+{% block title %}
+    Draw Chart Page
+{% endblock %}
+
+{% block content %}
+
+<div class="row" style="margin-top: 15px;">
+    <div class="col-2">
+        <div class="container">
+            <form action="/dataview/chart/" method="post">
+                {% csrf_token %}
+                <div class="form-check">
+                    {% for m in machine %}
+                    <label class="form-check-label" style="display: block;">
+                        <input type="checkbox" class="form-check-input" name="machine" value="{{m}}" onchange="this.form.submit()" {% if m in selected %} checked {% endif %}>
+                        {{m}}
+                    </label>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col">
+        <div class="container">
+            {% load static %}
+            {% for m in mapList %}
+            <div class="row" style="max-height: 500px;">
+                <div class="col-4">
+                    <h5>{{m.machine}}</h5>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                {% for th in m.table.th %}
+                                <th>{{th}}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tr in m.table.tr %}
+                            <tr>
+                                {% for td in tr %}
+                                <td scope="row">{{td}}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td scope="row"></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col">
+                    <img src="{% static 'chart' %}/{{m.machine}}.png" alt="No Chart" sizes="60px" class="img-fluid">
+                </div>
+            </div>
+            {% endfor %}    
+        </div>
+    </div>
+</div>
+
+{% endblock %}

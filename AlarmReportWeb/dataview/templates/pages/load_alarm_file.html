@@ -1,0 +1,67 @@
+{% extends "pages/base.html" %}
+
+    {% block title %}
+    {% endblock %}
+
+    {% block style %}
+    <style>
+        table {
+          font-family: arial, sans-serif;
+          border-collapse: collapse;
+          width: 100%;
+        }
+        
+        td, th {
+          border: 1px solid #dddddd;
+          text-align: left;
+          padding: 8px;
+        }
+        
+        tr:nth-child(even) {
+          background-color: #dddddd;
+        }
+    </style>
+    {% endblock %}
+
+    {% block content %}
+    <br>
+    {% if form != False %}
+    <div class="row">
+        <div class="container">
+            <form action="/dataview/loaddata/" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form }}
+                <input type="submit" class="btn btn-outline-success float-right" value="Upload"/>
+            </form>
+        </div>  
+    </div>
+    <hr>
+    {% else %}
+    <div class="row">
+        <div class="container">
+            <h2>Data show in Table</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                <tr>
+                    {% for th in table.th %}
+                    <th> {{ th }} </th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                    {% for row in table.tr %}
+                        <tr>
+                            {% for td in row %}
+                            <td> {{ td }} </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    {% endif %}
+
+    {% endblock %}
