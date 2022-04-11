@@ -31,6 +31,8 @@
             <form action="/dataview/loaddata/" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {{ form }}
+                <!-- <label for="alarmFiles">Select Files</label> -->
+                <!-- <input type="file" name="alarmFiles" id="alarmFiles" multiple /> -->
                 <input type="submit" class="btn btn-outline-success float-right" value="Upload"/>
             </form>
         </div>  
@@ -43,9 +45,9 @@
             <table class="table">
                 <thead class="thead-dark">
                 <tr>
-                    {% for th in table.th %}
+                {% for th in table.th %}
                     <th> {{ th }} </th>
-                    {% endfor %}
+                {% endfor %}
                 </tr>
                 </thead>
                 <tbody>

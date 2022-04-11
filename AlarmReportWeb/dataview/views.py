@@ -1,13 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from matplotlib.style import context
-from .forms import FileForm
+from .forms import FileForm, YmFileForm
 import pandas as pd
-# import os, sys
-# lib_path = os.path.abspath(os.path.join('utils'))
-# sys.path.append(lib_path)
-# print(lib_path)
-# from cal_occupancy_rate import summary_performace_by_day
+# utils modules
 from .caculate.cal_occupancy_rate import summary_performace_by_day
 from .caculate.convert import convert_df_to_table
 from .caculate.ym_and_chart import get_machine_list_to_show, load_performance_to_view,load_ym_to_view ,read_ym_to_Df, save_ym_to_excel, save_performance_to_excel, map_performance_ym_by_date
@@ -40,16 +36,24 @@ def load_alarm_file(request):
     if request.method == 'POST':
         # bind data to form
         form = FileForm(request.POST, request.FILES)
-        alarmFile = request.FILES['alarmFiles']  
-        performanceDict = summary_performace_by_day(alarmFile) 
-
-        # Save to database
-        save_performance_to_excel( oneDayPerformance = performanceDict)
-        #format date to display in html view
-        # performanceDict["Date"][0] = performanceDict["Date"][0].strftime("%Y-%m-%d") # eg: 2022-03-30
-        table = convert_df_to_table(pd.DataFrame(performanceDict))
-
-        # print(table)
+        alarmFiles = request.FILES.getlist('alarmFiles')  
+        # print(alarmFiles)
+        tableList = []
+        if len(alarmFiles):
+            for f in alarmFiles:
+                performanceDict = summary_performace_by_day(f) 
+                # Save to database
+                save_performance_to_excel( oneDayPerformance = performanceDict)
+                #format date to display in html view
+                # performanceDict["Date"][0] = performanceDict["Date"][0].strftime("%Y-%m-%d") # eg: 2022-03-30
+                # table = convert_df_to_table(pd.DataFrame(performanceDict))
+                tableList.append(pd.DataFrame(performanceDict))
+                # print(table)
+        # table = pd.concat(tableList, ignore_index = True)
+        tableDf = pd.concat(tableList, ignore_index = True)
+        tableDf.fillna(0, inplace = True)
+        table = convert_df_to_table(tableDf)
+        # print(tableList)
         context = {
             'form': False,
             'table': table
@@ -67,6 +71,7 @@ def load_alarm_file(request):
 # load yeild month from excel file
 def load_yeild_month(request):
     if request.method == 'POST':
+        form = FileForm(request.POST, request.FILES)
         ymFile = request.FILES['yieldmonth']
         # aa = pd.read_excel(ymFile, sheet_name="4-2022")
         # print(aa)
@@ -79,9 +84,10 @@ def load_yeild_month(request):
         }
         return render(request, 'pages/yeildmonth.html', context)
     else:
+        form = YmFileForm()
         context = {
-            'form': True,
-            'table': None
+            'form': form,
+            'table': False
         }
         return render(request, 'pages/yeildmonth.html', context)
 
