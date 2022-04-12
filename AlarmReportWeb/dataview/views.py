@@ -32,6 +32,9 @@ def chart(request):
     # print(mapData)
     return render(request, 'pages/chart.html', context={"machine": machineList, "selected": selected, 'mapList': resultList})
 
+def chart_v2(request):
+    return render(request, 'pages/chart.html', {})
+
 def load_alarm_file(request):
     if request.method == 'POST':
         # bind data to form
@@ -71,7 +74,7 @@ def load_alarm_file(request):
 # load yeild month from excel file
 def load_yeild_month(request):
     if request.method == 'POST':
-        form = FileForm(request.POST, request.FILES)
+        form = YmFileForm(request.POST, request.FILES)
         ymFile = request.FILES['yieldmonth']
         # aa = pd.read_excel(ymFile, sheet_name="4-2022")
         # print(aa)

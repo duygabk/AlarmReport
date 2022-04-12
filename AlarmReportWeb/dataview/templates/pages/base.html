@@ -8,6 +8,8 @@
     {% load static %}
 
     <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
     <title>{% block title %} {% endblock %}</title>
     <style>
         a.nav-link {
@@ -33,8 +35,18 @@
             <li class="nav-item">
                 <a class="nav-link btn btn-outline-info" href="/dataview/summary">Summary</a>
             </li>
-            <li class="nav-item">
+            {% comment %} <li class="nav-item">
                 <a class="nav-link btn btn-outline-danger" href="/dataview/chart">Chart</a>
+            </li> {% endcomment %}
+            <!-- Dropdown -->
+                <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle btn btn-outline-warning" href="/dataview/chart" id="navbardrop" data-toggle="dropdown">
+                    Chart
+                </a>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="/dataview/chart">Chart v1</a>
+                    <a class="dropdown-item" href="/dataview/chartv2">Chart v2</a>
+                </div>
             </li>
         </ul>
     </nav>

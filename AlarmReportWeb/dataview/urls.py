@@ -8,4 +8,5 @@ urlpatterns = [
     path('loaddata/', views.load_alarm_file),
     path('summary/', views.get_summary),
     path('yeildmonth/', views.load_yeild_month),
+    path('chartv2/', views.chart_v2)
 ]
