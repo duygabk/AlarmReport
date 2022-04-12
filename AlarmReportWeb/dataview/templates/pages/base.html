@@ -14,7 +14,11 @@
             margin-left: 10px;
         }
     </style>
-    {% block style %} {% endblock %}
+    {% block style %}
+    {% endblock %}
+
+    {% block script_head %}
+    {% endblock %}
 </head>
 <body>
 
@@ -36,10 +40,16 @@
             <li class="nav-item">
                 <a class="nav-link btn btn-outline-danger" href="/dataview/chart">Chart</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link btn btn-outline-warning" href="/dataview/chart_v2">Chart v2</a>
+            </li>
+
         </ul>
     </nav>
 
     {% block content %}
     {% endblock %}
 </body>
+    {% block script_tail %}
+    {% endblock %}
 </html>

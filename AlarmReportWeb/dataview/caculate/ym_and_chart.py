@@ -3,6 +3,7 @@ import openpyxl
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy import stats
 from .const import dateCol, m1601Col, m2601Col, m3601Col, ma1605Col, ma2605Col, ymFilePath, summaryFilePath
 
 def save_performance_to_excel(filePath = summaryFilePath,oneDayPerformance = {}):
@@ -114,3 +115,24 @@ def map_performance_ym_by_date(selectedMachine = []):
         # plt.show()
 
     return response
+
+# print chart by Highcharts js
+def load_data_for_chart_v2_by_machine(machineName):
+    chartDataDf = map_performance_ym_by_date([machineName])[0]['mapDf']
+    
+    xAxis_pf = chartDataDf['Performance'].to_list()
+    yAxis_ym = chartDataDf['YeildMonth'].to_list()
+    # print(xAxis_pf)
+    scraterData = [[xAxis_pf[i], yAxis_ym[i]] for i in range(len(xAxis_pf))]
+    # Regression line
+    slope, intercept, r, p, std_err = stats.linregress(x=xAxis_pf, y=yAxis_ym)
+
+    def myfunc(x):
+        return slope * x + intercept
+    
+    x_min = min(xAxis_pf)
+    x_max = max(xAxis_pf)
+
+    regressionData = [[x_min, myfunc(x_min)], [x_max, myfunc(x_max)]]
+
+    return regressionData, scraterData

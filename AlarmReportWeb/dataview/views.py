@@ -1,12 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from matplotlib.style import context
 from .forms import FileForm, YmFileForm
 import pandas as pd
 # utils modules
 from .caculate.cal_occupancy_rate import summary_performace_by_day
 from .caculate.convert import convert_df_to_table
-from .caculate.ym_and_chart import get_machine_list_to_show, load_performance_to_view,load_ym_to_view ,read_ym_to_Df, save_ym_to_excel, save_performance_to_excel, map_performance_ym_by_date
+from .caculate.ym_and_chart import get_machine_list_to_show, load_data_for_chart_v2_by_machine, load_performance_to_view,load_ym_to_view ,read_ym_to_Df, save_ym_to_excel, save_performance_to_excel, map_performance_ym_by_date
 # Create your views here.
 def index(request):
     # return HttpResponse("DataView Page")
@@ -31,6 +30,26 @@ def chart(request):
             })
     # print(mapData)
     return render(request, 'pages/chart.html', context={"machine": machineList, "selected": selected, 'mapList': resultList})
+
+def chart_v2(request):
+    machineList = get_machine_list_to_show()
+    selectM = machineList[0]
+    if request.method == 'POST':
+        selectM = request.POST['machine']
+        print(selectM)
+
+    chartData = {}
+    chartData['regression'], chartData['scratter'] = load_data_for_chart_v2_by_machine(selectM)
+
+    # print(chartData)
+
+    context = {
+        'regression': chartData['regression'],
+        'scratter': chartData['scratter'],
+        'machines': machineList,
+        'select': selectM
+    }
+    return render(request, 'pages/chart_v2.html', context)
 
 def load_alarm_file(request):
     if request.method == 'POST':
@@ -71,7 +90,7 @@ def load_alarm_file(request):
 # load yeild month from excel file
 def load_yeild_month(request):
     if request.method == 'POST':
-        form = FileForm(request.POST, request.FILES)
+        form = YmFileForm(request.POST, request.FILES)
         ymFile = request.FILES['yieldmonth']
         # aa = pd.read_excel(ymFile, sheet_name="4-2022")
         # print(aa)

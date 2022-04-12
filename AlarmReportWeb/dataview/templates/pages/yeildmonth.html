@@ -7,13 +7,15 @@
 {% block content %}
     <div class="row" style="margin-top: 20px;">
         <div class="container">
-            {% if form == True %}
+            {% if form != False %}
             <h5 class="text-left">Select Yeild Month file</h5>
             <form action="/dataview/yeildmonth/" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <input type="file" name="yieldmonth"/>
+                <!-- <input type="file" name="yieldmonth"/> -->
+                {{ form }}
                 <input type="submit" class="btn btn-outline-success float-right" value="Upload">
             </form>
+            <hr>
             {% else %}
             <table class="table table-hover">
                 <thead class="thead-dark">
