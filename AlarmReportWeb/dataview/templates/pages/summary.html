@@ -17,15 +17,23 @@
                             <option value="performance">Machine O.R</option>
                             <option value="yieldmonth" {% if select == 'yieldmonth' %} selected {% endif %}>Yeild Month</option>
                         </select>
-                        <!-- <input type="submit" class="btn btn-primary" value="Submit"> -->
+                        <!-- Date select field -->
+                        <div class="">
+                            <h5>Select date:</h5>
+                            <label for="datepicker">From:</label>
+                            <input type="date" name="from_date" id="datepicker" value="{{from_to_date.fromDate}}" class="form-control">
+                            <label for="datepicker2">To:</label>
+                            <input type="date" name="to_date" id="datepicker2" value="{{from_to_date.toDate}}" class="form-control">
+                            <input class="btn  btn-success" type="submit" value="Filter">                   
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
-        <div class="col">
+        <div class="col justify-content-center">
             <div class="container">
                 <h2 class="text-left">Summary of {% if select == 'yieldmonth' %} Yeild Month {% else %} Machine O.R {% endif %}</h2>
-                <table class="table table-hover table-inverse table-responsive">
+                <table class="table table-hover table-inverse table-responsive" id="summary_table">
                     <thead class="thead-dark">
                         <tr>
                             {% for th in table.th %}
@@ -46,4 +54,21 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block script_tail %}
+    <script>
+        table = document.getElementById("summary_table");
+        rows = table.getElementsByTagName("tr");
+        // console.log(rows)
+        for (i = 1; i < rows.length; i++){
+            row = table.rows[i];
+            row.onclick = function() {
+                var cell =  this.getElementsByTagName("td")[0];
+                var date = cell.innerHTML;
+                var submit = confirm(date)
+                console.log(submit)
+            }
+        }
+    </script>
 {% endblock %}
