@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from .forms import FileForm, YmFileForm
+from .forms import DateFilter, FileForm, YmFileForm
 import pandas as pd
 # utils modules
-from .caculate.cal_occupancy_rate import summary_performace_by_day
+from .caculate.cal_occupancy_rate import check_file_name, summary_performace_by_day
 from .caculate.convert import convert_df_to_table
 from .caculate.ym_and_chart import get_machine_list_to_show, load_data_for_chart_v2_by_machine, load_performance_to_view,load_ym_to_view ,read_ym_to_Df, save_ym_to_excel, save_performance_to_excel, map_performance_ym_by_date
 # Create your views here.
@@ -13,12 +13,20 @@ def index(request):
 
 def chart(request):
     selected = []
+    from_to_date = {
+        'fromDate': '',
+        'toDate': ''
+    }
     if request.method == 'POST':
         selected = request.POST.getlist('machine')
-        print(selected)
+        # print(selected)
+        from_to_date['fromDate'] = request.POST['from_date']
+        from_to_date['toDate'] = request.POST['to_date']
+
+    # filter from-to date
     # Get mapping by date from machine perfornamce and yeild month
     machineList = get_machine_list_to_show()
-    mapList = map_performance_ym_by_date(selected)
+    mapList = map_performance_ym_by_date(selected, from_to_date = from_to_date)
 
     resultList = [] # list of dict {'machine': machineName, 'table': mapTable}
     if len(mapList):
@@ -29,7 +37,10 @@ def chart(request):
                 'table': table
             })
     # print(mapData)
-    return render(request, 'pages/chart.html', context={"machine": machineList, "selected": selected, 'mapList': resultList})
+
+    # dateForm = DateFilter()
+
+    return render(request, 'pages/chart.html', context={"machine": machineList, "selected": selected, 'mapList': resultList, 'from_to_date': from_to_date})
 
 def chart_v2(request):
     machineList = get_machine_list_to_show()
@@ -56,6 +67,12 @@ def load_alarm_file(request):
         # bind data to form
         form = FileForm(request.POST, request.FILES)
         alarmFiles = request.FILES.getlist('alarmFiles')  
+        # Check Alarm File Name
+        checkFileName = check_file_name(alarmFiles)
+
+        if checkFileName['error']:
+            return render(request, 'pages/error.html', {'message': checkFileName['message'], 'from': 'loaddata'})
+
         # print(alarmFiles)
         tableList = []
         if len(alarmFiles):
@@ -115,13 +132,18 @@ def load_yeild_month(request):
 def get_summary(request):
     # By default, print performance
     select = 'performance'
+    from_to_date = {
+        'fromDate': '',
+        'toDate': ''
+    }
     if request.method == 'POST':
         select = request.POST['summarySelect']
-        print(select)
+        from_to_date['fromDate'] = request.POST['from_date']
+        from_to_date['toDate'] = request.POST['to_date']
 
-    summaryDf = load_performance_to_view() if select == "performance" else load_ym_to_view()
+    summaryDf = load_performance_to_view(from_to_date = from_to_date) if select == "performance" else load_ym_to_view(from_to_date = from_to_date)
     
     table = convert_df_to_table(summaryDf)
 
     # print(table)
-    return render(request, 'pages/summary.html', {'table': table, 'select': select})
+    return render(request, 'pages/summary.html', {'table': table, 'select': select, 'from_to_date': from_to_date})

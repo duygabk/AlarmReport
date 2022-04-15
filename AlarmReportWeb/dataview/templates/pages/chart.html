@@ -4,6 +4,22 @@
     Draw Chart Page
 {% endblock %}
 
+{% block style %}
+    <style>
+        .table-wrapper {
+            width: 100%;
+            max-height: 450px;
+            overflow-y: scroll;
+            overflow-x: auto;
+            display: inline-block;
+        }
+        .table-wrapper td {
+            white-space: nowrap;
+        }
+
+    </style>
+{% endblock %}
+
 {% block content %}
 
 <div class="row" style="margin-top: 15px;">
@@ -19,6 +35,15 @@
                     </label>
                     {% endfor %}
                 </div>
+                <hr>
+                <div class="">
+                    <h5>Select date:</h5>
+                    <label for="datepicker">From:</label>
+                    <input type="date" name="from_date" id="datepicker" value="{{from_to_date.fromDate}}" class="form-control">
+                    <label for="datepicker2">To:</label>
+                    <input type="date" name="to_date" id="datepicker2" value="{{from_to_date.toDate}}" class="form-control">
+                    <input class="btn  btn-success" type="submit" value="Filter">                   
+                </div>
             </form>
         </div>
     </div>
@@ -27,9 +52,9 @@
             {% load static %}
             {% for m in mapList %}
             <div class="row" style="max-height: 500px;">
-                <div class="col-4">
+                <div class="col-5">
                     <h5>{{m.machine}}</h5>
-                    <table class="table">
+                    <table class="table table-wrapper">
                         <thead>
                             <tr>
                                 {% for th in m.table.th %}
@@ -57,6 +82,7 @@
                     <img src="{% static 'chart' %}/{{m.machine}}.png" alt="No Chart" sizes="60px" class="img-fluid">
                 </div>
             </div>
+            <hr style="color: black;">
             {% endfor %}    
         </div>
     </div>

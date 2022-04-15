@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 # from readLog import caculate_performance
-from .const import sourceCol, timeCol, messageCol, alarmFolder, severityCol, summaryFilePath, dateCol
+from .const import sourceCol, timeCol, messageCol, alarmFolder, severityCol, summaryFilePath, dateCol, alarmFileHead
 
 # listObject = os.listdir(alarmFolder)
 # filePath = alarmFolder + '/' + listObject[-5]
@@ -182,9 +182,21 @@ def summary_performance_by_month(listFile):
     print(monthSummaryDf)
     return monthSummaryDf
 
-# monthSumDf = summary_performance_by_month(listObject)
-# excelOutputFilePath = outputFolder + 'Performance Of Machine 3-2022.xlsx'
-# monthSumDf.to_excel(excelOutputFilePath, sheet_name="03.2022", index=False)
 
-# filePath = filePath = alarmFolder + '/' + listObject[0]
-# summary_performace_by_day(filePath)
+# Check Alarm File name --> Incorrect return Error Message
+def check_file_name(filePaths):
+    # Check Alarm File name
+    print(filePaths)
+    filenameStr = [str(f) for f in filePaths]
+
+    for fStr in filenameStr:
+        if fStr.startswith(alarmFileHead) == False:
+            return {
+                'error': True,
+                'message': 'Invalid Alarm Report File Name!!!'
+            }
+
+    return {
+        'error': False,
+        'message': 'No Error'
+    }

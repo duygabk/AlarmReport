@@ -30,14 +30,17 @@ def save_performance_to_excel(filePath = summaryFilePath,oneDayPerformance = {})
 
         return
 
-def load_performance_to_view(filePath = summaryFilePath):
+def load_performance_to_view(filePath = summaryFilePath, from_to_date={'fromDate':'', 'toDate': ''}):
     # print(filePath)
     summaryDf = pd.read_excel(filePath)
     summaryDf[dateCol] = pd.to_datetime(summaryDf[dateCol]).dt.date
-    # summaryDict = summaryDf.to_dict('list')
-    #    
-    # return as DataFrame
-    return summaryDf
+
+    # filter by from_to_date
+    fromDate = pd.to_datetime(from_to_date['fromDate']).date() if from_to_date['fromDate'] != '' else summaryDf.iloc[0][dateCol]
+
+    toDate = pd.to_datetime(from_to_date['toDate']).date() if from_to_date['toDate'] != '' else summaryDf.iloc[-1][dateCol]
+
+    return summaryDf[summaryDf[dateCol] >= fromDate][summaryDf[dateCol] <= toDate]
 
 # Read Yeild Month File and return DataFrame
 def read_ym_to_Df(filePath):
@@ -59,18 +62,24 @@ def save_ym_to_excel(ymDf):
     ymDf.to_excel(ymFilePath, index = False)
     return
 
-def load_ym_to_view(filePath = ymFilePath):
+def load_ym_to_view(filePath = ymFilePath, from_to_date = {'fromDate': '', 'toDate': ''}):
     ymDf = pd.read_excel(filePath)
     ymDf[dateCol] = pd.to_datetime(ymDf[dateCol]).dt.date
-    return ymDf
+
+    fromDate = pd.to_datetime(from_to_date['fromDate']).date() if from_to_date['fromDate'] != '' else ymDf.iloc[0][dateCol]
+    toDate = pd.to_datetime(from_to_date['toDate']).date() if from_to_date['toDate'] != '' else ymDf.iloc[-1][dateCol]
+
+    return ymDf[ymDf[dateCol] >= fromDate][ymDf[dateCol] <= toDate]
 
 def get_machine_list_to_show():
     return list(load_ym_to_view().columns)[1:]
 
 # Mapping Machine performance and Yeild Month by Date
-def map_performance_ym_by_date(selectedMachine = []):
+# 15/04 --> add filter from-to date
+def map_performance_ym_by_date(selectedMachine = [], from_to_date = {'fromDate': '', 'toDate': ''}):
     
-    performanceDf = load_performance_to_view()
+    # filter from_to_date
+    performanceDf = load_performance_to_view(from_to_date = from_to_date)
     ymDf = load_ym_to_view()
     # machineList = list(ymDf.columns)[1:]
     # print(machineList)

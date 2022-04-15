@@ -12,3 +12,6 @@ class YmFileForm(forms.Form):
     # No Label, No Multilpe
     yieldmonth = forms.FileField(max_length=200)
 
+class DateFilter(forms.Form):
+    date_from = forms.DateInput()
+    date_to = forms.DateInput()

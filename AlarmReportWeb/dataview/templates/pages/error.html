@@ -1,0 +1,22 @@
+{% extends 'pages/base.html' %}
+
+{% block title %}
+Error Page
+{% endblock title %}
+
+{% block content %}
+
+    <div class="jumbotron jumbotron-fluid justify-content-center">
+        <div class="container">
+            <h1 class="display-3">Error Page</h1>
+            <p class="lead">Error Message:</p>
+            <hr class="my-2">
+            <h4 class="text-danger">{{message}}</h4>
+            <br>
+            <p class="lead">
+                <a class="btn btn-primary" href="/dataview/{{from}}" role="button">Go Back</a>
+            </p>
+        </div>
+    </div>
+
+{% endblock content %}

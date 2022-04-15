@@ -19,3 +19,6 @@ m3601Col = "M3601"
 ma1605Col = "MA1605"
 ma2605Col = "MA2605"
 ymFilePath = os.getcwd() + "/dataview/outputs/ym_summary.xlsx"
+
+# FileName check
+alarmFileHead = "Denka Alarm Daily Report"
