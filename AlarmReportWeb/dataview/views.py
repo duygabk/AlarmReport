@@ -3,9 +3,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 from .forms import DateFilter, FileForm, YmFileForm
 import pandas as pd
 # utils modules
-from .caculate.cal_occupancy_rate import check_file_name, summary_performace_by_day
+from .caculate.cal_occupancy_rate import check_file_name, filter_alarm_files, summary_performace_by_day
 from .caculate.convert import convert_df_to_table
-from .caculate.ym_and_chart import get_machine_list_to_show, load_data_for_chart_v2_by_machine, load_performance_to_view,load_ym_to_view ,read_ym_to_Df, save_ym_to_excel, save_performance_to_excel, map_performance_ym_by_date
+from .caculate.ym_and_chart import get_machine_list_to_show, load_data_for_chart_v2_by_machine_date, load_line_chart_data_filter_by_date, load_performance_to_view,load_ym_to_view ,read_ym_to_Df, save_ym_to_excel, save_performance_to_excel, map_performance_ym_by_date
 # Create your views here.
 def index(request):
     # return HttpResponse("DataView Page")
@@ -45,20 +45,39 @@ def chart(request):
 def chart_v2(request):
     machineList = get_machine_list_to_show()
     selectM = machineList[0]
+    chartType = 'line'
+    from_to_date = {
+        'fromDate': '',
+        'toDate': ''
+    }
     if request.method == 'POST':
         selectM = request.POST['machine']
-        print(selectM)
+        chartType = request.POST['chart_type']
+        from_to_date['fromDate'] = request.POST['from_date']
+        from_to_date['toDate'] = request.POST['to_date']
+        print(selectM, chartType, from_to_date)
 
+    # Regression Line Data
     chartData = {}
-    chartData['regression'], chartData['scratter'] = load_data_for_chart_v2_by_machine(selectM)
+    chartData['regression'], chartData['scratter'] = load_data_for_chart_v2_by_machine_date(machine = selectM, from_to_date = from_to_date)
+    # Regression Line Map table (DataFrame)
+    map_table = map_performance_ym_by_date(selectedMachine=[selectM], from_to_date = from_to_date)[0]['mapDf']
+    table = convert_df_to_table(map_table)
+    # print(table)
+
+    line_chart_data = load_line_chart_data_filter_by_date(machineList = machineList, from_to_date = from_to_date)
 
     # print(chartData)
 
     context = {
         'regression': chartData['regression'],
         'scratter': chartData['scratter'],
+        'table': table,
         'machines': machineList,
-        'select': selectM
+        'select': selectM,
+        'chart_type': chartType,
+        'from_to_date': from_to_date,
+        'line_chart_data': line_chart_data,
     }
     return render(request, 'pages/chart_v2.html', context)
 
@@ -67,25 +86,24 @@ def load_alarm_file(request):
         # bind data to form
         form = FileForm(request.POST, request.FILES)
         alarmFiles = request.FILES.getlist('alarmFiles')  
-        # Check Alarm File Name
+        
+        # Check Alarm File Name --> Return list of alarm file only, if not return error
         checkFileName = check_file_name(alarmFiles)
 
         if checkFileName['error']:
             return render(request, 'pages/error.html', {'message': checkFileName['message'], 'from': 'loaddata'})
 
+        print(checkFileName['files'])
         # print(alarmFiles)
         tableList = []
-        if len(alarmFiles):
-            for f in alarmFiles:
+        if len(checkFileName['files']):
+            for f in checkFileName['files']:
                 performanceDict = summary_performace_by_day(f) 
                 # Save to database
                 save_performance_to_excel( oneDayPerformance = performanceDict)
-                #format date to display in html view
-                # performanceDict["Date"][0] = performanceDict["Date"][0].strftime("%Y-%m-%d") # eg: 2022-03-30
-                # table = convert_df_to_table(pd.DataFrame(performanceDict))
+                # table to view
                 tableList.append(pd.DataFrame(performanceDict))
-                # print(table)
-        # table = pd.concat(tableList, ignore_index = True)
+
         tableDf = pd.concat(tableList, ignore_index = True)
         tableDf.fillna(0, inplace = True)
         table = convert_df_to_table(tableDf)
@@ -147,3 +165,9 @@ def get_summary(request):
 
     # print(table)
     return render(request, 'pages/summary.html', {'table': table, 'select': select, 'from_to_date': from_to_date})
+
+# Delete data by date
+def delete_performance(request):
+    dateStr = request.GET.get('date')
+    print(dateStr)
+    return HttpResponseRedirect('/dataview/summary/')

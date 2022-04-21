@@ -4,6 +4,7 @@ import os
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
+import json
 from .const import dateCol, m1601Col, m2601Col, m3601Col, ma1605Col, ma2605Col, ymFilePath, summaryFilePath
 
 def save_performance_to_excel(filePath = summaryFilePath,oneDayPerformance = {}):
@@ -46,12 +47,11 @@ def load_performance_to_view(filePath = summaryFilePath, from_to_date={'fromDate
 def read_ym_to_Df(filePath):
     ymDf = pd.read_excel(filePath, sheet_name = '4-2022')
     # Rename Columns as Machine Name
-    ymDf.columns = [dateCol, m3601Col, ma1605Col, ma2605Col, m1601Col, m2601Col ]
+    ymDf.rename(columns={'YM1601': m1601Col, 'YM1605': ma1605Col, 'YM2601': m2601Col, 'YM2605': ma2605Col, 'YM3601': m3601Col}, inplace = True)
+    # ymDf.columns = [dateCol, m1601Col, ma1605Col, m2601Col, ma2605Col, m3601Col]
     # print(ymDf, ymDf.columns)
     ymDf.dropna(axis=0, thresh=4, inplace=True)
     ymDf.dropna(axis=1, thresh=3, inplace=True)
-
-    # print(ymDf)
 
     return ymDf
 
@@ -72,10 +72,13 @@ def load_ym_to_view(filePath = ymFilePath, from_to_date = {'fromDate': '', 'toDa
     return ymDf[ymDf[dateCol] >= fromDate][ymDf[dateCol] <= toDate]
 
 def get_machine_list_to_show():
-    return list(load_ym_to_view().columns)[1:]
+    machine_list = list(load_ym_to_view().columns)[1:]
+    # print('get machine list', machine_list)
+    return machine_list
 
 # Mapping Machine performance and Yeild Month by Date
 # 15/04 --> add filter from-to date
+# Return DataFrame
 def map_performance_ym_by_date(selectedMachine = [], from_to_date = {'fromDate': '', 'toDate': ''}):
     
     # filter from_to_date
@@ -122,12 +125,12 @@ def map_performance_ym_by_date(selectedMachine = [], from_to_date = {'fromDate':
         plt.title(m)
         plt.savefig(imgPath)
         # plt.show()
-
+    # Return list of DataFrame {'Date': [...], 'Performance': [...], 'YeildMonth': [...]}
     return response
 
 # print chart by Highcharts js
-def load_data_for_chart_v2_by_machine(machineName):
-    chartDataDf = map_performance_ym_by_date([machineName])[0]['mapDf']
+def load_data_for_chart_v2_by_machine_date(machine, from_to_date):
+    chartDataDf = map_performance_ym_by_date(selectedMachine = [machine], from_to_date = from_to_date)[0]['mapDf']
     
     xAxis_pf = chartDataDf['Performance'].to_list()
     yAxis_ym = chartDataDf['YeildMonth'].to_list()
@@ -145,3 +148,24 @@ def load_data_for_chart_v2_by_machine(machineName):
     regressionData = [[x_min, myfunc(x_min)], [x_max, myfunc(x_max)]]
 
     return regressionData, scraterData
+
+# print base line chart by Highcharts js
+# return dict {'Date': [,,,], 'M1601': [0.3, 0.5....]}
+def load_line_chart_data_filter_by_date(machineList, from_to_date):
+    # Get machine performance filter by date
+    performDf = load_performance_to_view(from_to_date = from_to_date)
+    # Get require columns --> Data||M1601||MA1605....
+    # getColumns = machineList.copy() # copy list values
+    machineListCopy = list(machineList) # create copy of origin list
+    # machineListCopy.insert(0, dateCol)
+
+    # response = performDf.to_dict('split')
+    response = {}
+    for col in machineListCopy:
+        response[col] = performDf[col].to_list()
+    response[dateCol] = performDf[dateCol].astype(str).to_list()
+
+    # return json format
+    res_json = json.dumps(response)
+    # print(res_json, type(res_json))
+    return res_json

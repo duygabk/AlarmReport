@@ -15,7 +15,9 @@ def alarm_seperate_by_machine(logs):
     logMachine = {}  # { "machine name": DataFrame { "Event time": ..., "Message": .... } }
 
     #get machine name from Original source
-    nameList = [name[:name.index('.')] for name in logs[sourceCol]] # eg BLD.BL3110RUN -> get BLD
+    nameHaveDot = list(set([name for name in logs[sourceCol] if '.' in name]))
+    # print(list(set(nameHaveDot)))
+    nameList = [name[:name.index('.')] for name in nameHaveDot] # eg BLD.BL3110RUN -> get BLD
 
     #sort machine name alphabetically
     machineName = sorted(list(set(nameList)))
@@ -186,17 +188,24 @@ def summary_performance_by_month(listFile):
 # Check Alarm File name --> Incorrect return Error Message
 def check_file_name(filePaths):
     # Check Alarm File name
-    print(filePaths)
-    filenameStr = [str(f) for f in filePaths]
+    # print(type(filePaths))
+    # filenameStr = [str(f) for f in filePaths]
 
-    for fStr in filenameStr:
-        if fStr.startswith(alarmFileHead) == False:
-            return {
-                'error': True,
-                'message': 'Invalid Alarm Report File Name!!!'
-            }
+    alarmFilesFiltered = [f for f in filePaths if str(f).startswith(alarmFileHead) == True]
+
+    if len(alarmFilesFiltered) == 0:
+        return {
+            'error': True,
+            'message': 'Invalid Alarm Report File Name!!!'
+        }
 
     return {
         'error': False,
-        'message': 'No Error'
+        'message': 'No Error',
+        'files': alarmFilesFiltered
     }
+
+# Return list of file with alarmFileName
+# input: list of file uploaded
+def filter_alarm_files(filePaths):
+    return [f for f in filePaths if str(f).startswith(alarmFileHead) == True]

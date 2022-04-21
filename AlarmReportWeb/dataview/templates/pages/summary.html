@@ -39,6 +39,7 @@
                             {% for th in table.th %}
                                 <th>{{ th }}</th>
                             {% endfor %}
+                                <th>Action</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -47,6 +48,7 @@
                                     {% for td in row %}
                                         <td>{{ td }}</td>
                                     {% endfor %}
+                                        <td><a id = {{row}} class="btn-sm btn-danger"onclick="delFunc()">Del</a></td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -58,17 +60,56 @@
 
 {% block script_tail %}
     <script>
-        table = document.getElementById("summary_table");
-        rows = table.getElementsByTagName("tr");
-        // console.log(rows)
-        for (i = 1; i < rows.length; i++){
-            row = table.rows[i];
-            row.onclick = function() {
-                var cell =  this.getElementsByTagName("td")[0];
-                var date = cell.innerHTML;
-                var submit = confirm(date)
-                console.log(submit)
+        // table = document.getElementById("summary_table");
+        // rows = table.getElementsByTagName("tr");
+        // // console.log(rows)
+        // for (i = 1; i < rows.length; i++){
+        //     row = table.rows[i];
+        //     row.ondblclick = function() {
+        //         var cell =  this.getElementsByTagName("td")[0];
+        //         var date = cell.innerHTML;
+        //         var submit = confirm(date)
+        //         console.log(submit, date)
+        //     }
+        // }
+        function delFunc(){
+            console.log("delete");
+            // rowParent = this.parentElement.parentElement;
+            // cell = rowParent.getElementsByTagName("td")[0].innerHTML;
+            // element = event.srcElement;
+            // console.log(element, typeof(element));
+            // dateElement = element.parentNode
+            event.preventDefault()
+            onclickEle = event.target;
+            // Get 1st td column --> date
+            getDate = onclickEle.parentElement.parentElement.getElementsByTagName("td")[0].innerHTML;
+            console.log(getDate)
+            delConfirm = confirm("Delete " + getDate)
+            // console.log(delConfirm)
+            if (delConfirm) {
+                
             }
+        }
+        // Add Event Listener for delete button
+        table = document.getElementById('summary_table');
+        rows = table.getElementsByTagName('tr');
+        // console.log(rows)
+        // for (i = 1; i < rows.length; i++){
+        //     row = rows[i];
+        //     rowDate = row.getElementsByTagName('td')[0].innerHTML;
+
+        //     delLink = row.getElementsByTagName('a')[0];
+        //     // console.log(delLink)
+        //     delLink.setAttribute('href', '/dataview/del/?date=' + rowDate)
+        //     delLink.onclick = function(e){
+        //         e.preventDefault();
+        //         console.log(i)
+        //         // confirmDel = confirm('Are you sure delete this item ' + rowDate)
+        //     }
+        // }
+
+        function onClickHandler(date){
+            console.log(date)
         }
     </script>
 {% endblock %}

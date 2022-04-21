@@ -12,7 +12,7 @@
 {% block style %}
     <style>
         #chart-container {
-            height: 400px;
+            height: auto;
         }
 
         .highcharts-figure,
@@ -20,6 +20,10 @@
             min-width: 310px;
             max-width: 800px;
             margin: 1em auto;
+        }
+
+        .highcharts-figure {
+            float: left;
         }
 
         .highcharts-data-table table {
@@ -57,60 +61,188 @@
         .highcharts-data-table tr:hover {
             background: #f1f7ff;
         }
+    
+        .table-wrapper {
+            width: 100%;
+            max-height: 600px;
+            overflow-y: scroll;
+            overflow-x: auto;
+            display: inline-block;
+        }
+        .table-wrapper td {
+            white-space: nowrap;
+        }
+
+        .table-wrapper th {
+            position: sticky;
+            top: 0;
+            /* z-index: 1; */
+        }
+
+        .hidden {
+            display: none;
+        }
+
     </style>
 {% endblock %}
 
 {% block content %}
-    <div class="row">
+<div class="row">
+    <div class="col-sm col-xs col-lg-2">
         <div class="container">
             <div class="form-group">
-            <form action="/dataview/chart_v2" method="post">
-                {% csrf_token %}
-            
-                <label for="machineID">Select Machine</label>
-                <select class="custom-select" name="machine" id="machineID" onchange="this.form.submit()">
-                    {% for machine in machines %}
-                    <option value="{{machine}}" {% if machine == select %} selected {% endif %}>{{machine}}</option>
-                    {% endfor %}
-                </select>
-                <!-- <input type="submit" class="btn btn-primary" value="Submit"> -->
-            </form>
+                <form action="/dataview/chart_v2/" method="post">
+                    {% csrf_token %}
+                
+                    <label for="machineID">Select Machine</label>
+                    <select class="custom-select" name="machine" id="machineID" onchange="this.form.submit()">
+                        {% for machine in machines %}
+                        <option value="{{machine}}" {% if machine == select %} selected {% endif %}>{{machine}}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <label for="chart_typeID">Select Chart</label>
+                    <select class="custom-select" name="chart_type" id="chart_typeID" onchange="this.form.submit()">
+                        <option value="regression" {% if chart_type == 'regression' %} selected {% endif %}>Regression Line</option>
+                        <option value="line" {% if chart_type == 'line' %} selected {% endif %}>Basic Line</option>
+                    </select>
+                    <!-- <input type="submit" class="btn btn-primary" value="Submit"> -->
+                    <div class="mt-3">
+                        <h5>Select date:</h5>
+                        <label for="datepicker">From:</label>
+                        <input type="date" name="from_date" id="datepicker" value="{{from_to_date.fromDate}}" class="form-control" onchange="this.form.submit()">
+                        <label for="datepicker2">To:</label>
+                        <input type="date" name="to_date" id="datepicker2" value="{{from_to_date.toDate}}" class="form-control" onchange="this.form.submit()">
+                        <input class="btn  btn-success" type="submit" value="Filter">                   
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-    <figure class="highcharts-figure">
-        <div id="chart-container"></div>
-        <p class="highcharts-description">
-            Chart showing how a line series can be used to show a computed
-            regression line for a dataset. The source data for the regression line
-            is visualized as a scatter series.
-        </p>
-    </figure>
+    <div class="col">
+        <div class="container">
+          
+            <div class="row">
+                <div class="col-5" id="regress-chart-id">
+                    <!-- Data map table -->
+                    <h5>{{select}}</h5>
+                    <table class="table table-wrapper">
+                        <thead class="thead-dark">
+                            <tr>
+                                {% for th in table.th %}
+                                <th>{{th}}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tr in table.tr %}
+                            <tr>
+                                {% for td in tr %}
+                                <td scope="row">{{td}}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td scope="row"></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col">
+                    <!-- Regression Line + Scratter Chart -->
+                    <figure class="highcharts-figure">
+                        <div id="chart-container"></div>
+                        <p class="highcharts-description">
+                            <!-- {{select}} -->
+                        </p>
+                    </figure>
+                </div>
+            </div>
+            
+         
+            <figure class="highcharts-figure">
+                <div id="line-chart-container"></div>
+                <p class="highcharts-description">
+                    <!-- {{select}} -->
+                </p>
+            </figure>                
+          
+        </div>
+
+    </div>
+</div>
 {% endblock %}
 
 
 
 {% block script_tail %}
-    <script>
-        var regressionData = {{ regression }}
-        var scratterData = {{ scratter }}
-        console.log({regressionData}, {scratterData})
-
-        var testData = [1, 1.5, 2.8, 3.5, 3.9, 4.2]
-        var testData2 = [[1,1], [2,3], [5,10], [8, 20]]
+    <script type="text/javascript">
+        // get data from django backend
+        var regressionData = {{ regression }};
+        var scratterData = {{ scratter }};
+        var machine = '{{select}}';
+        var line_data_json = String.raw`{{ line_chart_data|safe }}`;
+        var line_chart_data = JSON.parse(line_data_json); // type: Object
+        var chart_type = document.getElementById("chart_typeID").value;
+        var regression_chart_ele = document.getElementById("chart-container");
+        var line_chart_ele = document.getElementById("line-chart-container");
+        var regression_div_ele = document.getElementById("regress-chart-id");
         
+        // console.log(chart_type)
+        if (chart_type === "line") {
+            console.log("Line");
+            regression_chart_ele.style.setProperty('display', 'none');
+            regression_div_ele.style.setProperty('display', 'none')
+            line_chart_ele.style.setProperty('display', 'initial');
+        } else {
+            console.log("Regression")
+            regression_chart_ele.style.setProperty('display', 'initial');
+            regression_div_ele.style.setProperty('display', 'initial');
+            line_chart_ele.style.setProperty('display', 'none');
+        }
+            
+        // Seperate x, y axis values 
+        var [xAxisValues, yAxisValues] = [[], []];
+        scratterData.forEach(function(scratter){
+            // console.log(scratter);
+            xAxisValues.push(scratter[0]);
+            yAxisValues.push(scratter[1]);
+        })
+
+        // console.log({regressionData}, {scratterData}, xAxisValues, yAxisValues)
+        // console.log('line chart data', line_chart_data,typeof(line_chart_data))
+        // BaseLine Chart Data
+        line_chart_series = [];
+        machines_arr = Object.keys(line_chart_data).filter(x => x != 'Date');
+        machines_arr.forEach(function(key){
+            line_chart_series.push({
+                name: key,
+                data: line_chart_data[key]
+            });
+        });
+        console.log('line series', line_chart_series);
+        // Regression Line
         Highcharts.chart('chart-container', {
+            chart: {
+                height: 600,
+            },
             title: {
                 text: 'Scatter plot with regression line'
             },
             xAxis: {
                 min: 0,
-                max: 1.0
+                max: Math.max(...xAxisValues),
             },
             yAxis: {
-                min: 0
+                min: 0,
+                max: Math.max(...yAxisValues)
             },
             series: [{
+                lineWidth: 3,
                 type: 'line',
+                color: '#9312e3',
                 name: 'Regression Line',
                 data: regressionData,
                 marker: {
@@ -124,12 +256,81 @@
                 enableMouseTracking: true
             }, {
                 type: 'scatter',
-                name: 'Occupancy Rate',
+                name: 'Machine O.R <-> Production',
                 data: scratterData,
                 marker: {
-                    radius: 4
+                    symbol: 'circle',
+                    radius: 5
                 }
             }]
+        });
+
+        // Base Line
+        Highcharts.chart('line-chart-container', {
+            chart: {
+                type: 'line',
+                width: 1000,
+                height: 500
+            },
+            title: {
+                text: 'Occupancy Rate of Machine'
+            },
+        
+            subtitle: {
+                text: ''
+            },
+        
+            yAxis: {
+                title: {
+                    text: 'Machine O.R'
+                }
+            },
+        
+            xAxis: {
+                accessibility: {
+                    rangeDescription: 'Range: 2010 to 2017'
+                },
+                categories: line_chart_data['Date']
+            },
+        
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle'
+            },
+        
+            plotOptions: {
+                series: {
+                    label: {
+                        connectorAllowed: false
+                    },
+                    // pointStart: 15
+                },
+                line: {
+                    dataLabels: {
+                        enabled: true
+                    },
+                    // enableMouseTracking: false
+                }
+            },
+        
+            series: line_chart_series,
+        
+            responsive: {
+                rules: [{
+                    condition: {
+                        maxWidth: 1000
+                    },
+                    chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                    }
+                }]
+            }
+        
         });
     </script>
 {% endblock %}
