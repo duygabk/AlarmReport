@@ -16,6 +16,7 @@
                         <select class="custom-select" name="summarySelect" id="summaryID" onchange="this.form.submit()">
                             <option value="performance">Machine O.R</option>
                             <option value="yieldmonth" {% if select == 'yieldmonth' %} selected {% endif %}>Yeild Month</option>
+                            <option value="shortstop" {% if select == 'shortstop' %} selected {% endif %}>Short Time Stop</option>
                         </select>
                         <!-- Date select field -->
                         <div class="">
@@ -32,7 +33,7 @@
         </div>
         <div class="col justify-content-center">
             <div class="container">
-                <h2 class="text-left">Summary of {% if select == 'yieldmonth' %} Yeild Month {% else %} Machine O.R {% endif %}</h2>
+                <h2 class="text-left">Summary of {% if select == 'yieldmonth' %} Yeild Month {% elif select == 'performance' %} Machine O.R {% else %} Short Time Stop {% endif %}</h2>
                 <table class="table table-hover table-inverse table-responsive" id="summary_table">
                     <thead class="thead-dark">
                         <tr>

@@ -3,17 +3,25 @@ import os
 import openpyxl
 from const import outputFolder
 
-def check_file_exist(filePath):
-    return True if os.path.exists(filePath) else False
+import pandas as pd
 
-def create_new_book(filePath):
-    wb = openpyxl.Workbook()
-    wb.save(filePath)
+# def check_file_exist(filePath):
+#     return True if os.path.exists(filePath) else False
 
-filePath = outputFolder + "DrawChart.xlsx"
+# def create_new_book(filePath):
+#     wb = openpyxl.Workbook()
+#     wb.save(filePath)
 
-print(
-    check_file_exist(filePath)
-)
+# filePath = outputFolder + "DrawChart.xlsx"
 
-create_new_book(filePath)
+# print(
+#     check_file_exist(filePath)
+# )
+
+# create_new_book(filePath)
+
+# test pd.datetime
+
+_10m = pd.Timedelta(minutes = 10)
+
+print(_10m)

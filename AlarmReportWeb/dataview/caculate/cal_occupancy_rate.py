@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 # from readLog import caculate_performance
-from .const import sourceCol, timeCol, messageCol, alarmFolder, severityCol, summaryFilePath, dateCol, alarmFileHead
+from .const import sourceCol, timeCol, messageCol, alarmFolder, severityCol, dateCol, alarmFileHead, _short_stop_time_
 
 # listObject = os.listdir(alarmFolder)
 # filePath = alarmFolder + '/' + listObject[-5]
@@ -42,6 +42,9 @@ def alarm_seperate_by_machine(logs):
 def caculate_stop_time(logOneMachine):
 
     stopTime = pd.Timedelta(0)
+    # Add 23/4/2022
+    # Count short stop time
+    shortStopCount = 0
 
     #Filter by Severity 300 RUN/STOP messages
     severity300 = logOneMachine[logOneMachine[severityCol] == 300]
@@ -86,23 +89,18 @@ def caculate_stop_time(logOneMachine):
             # dataRunMessage.append(severity300.iloc[findRun][messageCol])
 
         stopTime += deltaT
-
+        # add 23/04/2022 --> short stop counter
+        if deltaT <= _short_stop_time_: 
+            shortStopCount += 1
         #End of the alarm report, finish
         if endLoop == True:
             break
-    ## For Export detail STOP 
-    # dataViewer = pd.DataFrame({
-    #     "From STOP Time": dataStopTime,
-    #     "STOP Message": dataStopMessage,
-    #     "To RUN Time": dataRunTime,
-    #     "RUN Message": dataRunMessage
-    # })
 
     operatedTime = logOneMachine.iloc[-1][timeCol] - logOneMachine.iloc[0][timeCol]
     
     #div by zero error
     if operatedTime == pd.Timedelta(0):
-        return 0
+        return 0, 0
 
     oneDay = pd.Timedelta("1 days")
 
@@ -114,30 +112,14 @@ def caculate_stop_time(logOneMachine):
         performance = runTime/oneDay
     # print(operatedTime.total_seconds(), stopTime.total_seconds(), performance)
     performance = round(performance, 3)
-    #Write to Excel --> Not use
-    # format time to display
-    # stopTime     = "{:0>8}".format(str(stopTime))
-    # operatedTime = "{:0>8}".format(str(operatedTime))
-    # stopTime = strftime("%H:%M:%S", gmtime(int(stopTime.total_seconds())))
-    # operatedTime = strftime("%H:%M:%S", gmtime(int(operatedTime.total_seconds())))
-    # print(dataViewer.head())
-    # caculatedData = pd.DataFrame({
-    #     "Stop time":[stopTime],
-    #     "Operated time": [operatedTime],
-    #     "Performance": [performance]
-    # })
 
-    # excelOutputDf = pd.concat([caculatedData, dataViewer], ignore_index=True, axis=0)
-        
-    # with pd.ExcelWriter("testOutput.xlsx", mode='a',if_sheet_exists='replace') as outputFile:
-    #     excelOutputDf.to_excel(outputFile, sheet_name=logOneMachine.iloc[0][sourceCol], index=False, startrow=0)
-    
-    return performance
+    # return tuple contain machine performance and short-stop-time counter
+    return performance, shortStopCount
 
 def summary_performace_by_day(filePath):
 
-    performanceSum = {
-    }
+    performanceSumDict = {}
+    shortTimeStopDict = {}
 
     logs = pd.read_excel(filePath, skiprows=3)
     #remove rows include N/A values
@@ -148,7 +130,7 @@ def summary_performace_by_day(filePath):
 
     # alarm report date
     alarmDate = logs[timeCol].median().date()
-    performanceSum["Date"] = [alarmDate]
+    performanceSumDict["Date"] = shortTimeStopDict["Date"] = [alarmDate]
 
     #alarm seperate by machine, and return machine name list
     logAllMachine, nameAllMachine = alarm_seperate_by_machine(logs)
@@ -159,10 +141,13 @@ def summary_performace_by_day(filePath):
 
     for name in nameAllMachine:
         # print(name)
-        performanceSum[name] = [caculate_stop_time(logAllMachine[name])]
-    
-    # print(performanceSum)
-    return performanceSum
+        perform, shortStopCount = caculate_stop_time(logAllMachine[name])
+        performanceSumDict[name] = [perform]
+        shortTimeStopDict[name]  = [shortStopCount]
+    # Return 2 dict as {'Date': [2022-04-11], 'M1601': [0.85], 'M2601': [0.3] ...}
+    # and short time stop dict {'Date': [2022-04-11], 'M1601': [5], 'M2601': [25] ...}
+    # print('summary by day function: ', performanceSumDict)
+    return performanceSumDict, shortTimeStopDict
 
 def summary_performance_by_month(listFile):
     
@@ -173,7 +158,6 @@ def summary_performance_by_month(listFile):
         print("Caculating.... ", percentRun, '/', completeNum)
         percentRun += 1
         filePath = alarmFolder + oneFile
-        # onedaySummaryDf = summary_performace_by_day(filePath)
         # print(onedaySummaryDf)
         onedaySummaryDf = pd.DataFrame(summary_performace_by_day(filePath))
         # print(onedaySummaryDf)

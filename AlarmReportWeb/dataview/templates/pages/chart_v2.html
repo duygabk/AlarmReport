@@ -104,7 +104,8 @@
                     <label for="chart_typeID">Select Chart</label>
                     <select class="custom-select" name="chart_type" id="chart_typeID" onchange="this.form.submit()">
                         <option value="regression" {% if chart_type == 'regression' %} selected {% endif %}>Regression Line</option>
-                        <option value="line" {% if chart_type == 'line' %} selected {% endif %}>Basic Line</option>
+                        <option value="line" {% if chart_type == 'line' %} selected {% endif %}>Machine Occupancy Rate</option>
+                        <option value="bar" {% if chart_type == 'bar' %} selected {% endif %}>Short Stop</option>
                     </select>
                     <!-- <input type="submit" class="btn btn-primary" value="Submit"> -->
                     <div class="mt-3">

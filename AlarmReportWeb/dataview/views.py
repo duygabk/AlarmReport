@@ -5,7 +5,8 @@ import pandas as pd
 # utils modules
 from .caculate.cal_occupancy_rate import check_file_name, filter_alarm_files, summary_performace_by_day
 from .caculate.convert import convert_df_to_table
-from .caculate.ym_and_chart import get_machine_list_to_show, load_data_for_chart_v2_by_machine_date, load_line_chart_data_filter_by_date, load_performance_to_view,load_ym_to_view ,read_ym_to_Df, save_ym_to_excel, save_performance_to_excel, map_performance_ym_by_date
+from .caculate.ym_and_chart import get_machine_list_to_show, load_data_for_chart_v2_by_machine_date, load_dataframe_to_view, load_line_chart_data_filter_by_date, read_ym_to_Df, save_ym_to_excel, save_one_day_data_to_excel, map_performance_ym_by_date
+from .caculate.const import _shortStopTimeFilePath_, _performanceSummaryFilePath_
 # Create your views here.
 def index(request):
     # return HttpResponse("DataView Page")
@@ -98,9 +99,10 @@ def load_alarm_file(request):
         tableList = []
         if len(checkFileName['files']):
             for f in checkFileName['files']:
-                performanceDict = summary_performace_by_day(f) 
+                performanceDict, shortTimeStopDict = summary_performace_by_day(f) 
                 # Save to database
-                save_performance_to_excel( oneDayPerformance = performanceDict)
+                if save_one_day_data_to_excel(filePath = _performanceSummaryFilePath_, oneDayDataDict = performanceDict) == False or save_one_day_data_to_excel(filePath=_shortStopTimeFilePath_, oneDayDataDict=shortTimeStopDict) == False:
+                    return render(request, 'pages/error.html', {'message': 'Write to Excel Failed!!!', 'from': 'loaddata'})
                 # table to view
                 tableList.append(pd.DataFrame(performanceDict))
 
@@ -159,7 +161,8 @@ def get_summary(request):
         from_to_date['fromDate'] = request.POST['from_date']
         from_to_date['toDate'] = request.POST['to_date']
 
-    summaryDf = load_performance_to_view(from_to_date = from_to_date) if select == "performance" else load_ym_to_view(from_to_date = from_to_date)
+    # summaryDf = load_performance_to_view(from_to_date = from_to_date) if select == "performance" else load_ym_to_view(from_to_date = from_to_date)
+    summaryDf = load_dataframe_to_view(type=select, from_to_date = from_to_date)
     
     table = convert_df_to_table(summaryDf)
 
