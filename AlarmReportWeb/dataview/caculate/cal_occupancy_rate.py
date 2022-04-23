@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 # from readLog import caculate_performance
-from .const import sourceCol, timeCol, messageCol, alarmFolder, severityCol, dateCol, alarmFileHead, _short_stop_time_
+from .const import sourceCol, timeCol, messageCol, alarmFolder, severityCol, dateCol, alarmFileHead, short_stop_time
 
 # listObject = os.listdir(alarmFolder)
 # filePath = alarmFolder + '/' + listObject[-5]
@@ -90,7 +90,7 @@ def caculate_stop_time(logOneMachine):
 
         stopTime += deltaT
         # add 23/04/2022 --> short stop counter
-        if deltaT <= _short_stop_time_: 
+        if deltaT <= short_stop_time: 
             shortStopCount += 1
         #End of the alarm report, finish
         if endLoop == True:

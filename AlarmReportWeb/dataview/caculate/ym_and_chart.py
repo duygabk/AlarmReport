@@ -6,7 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 import json
-from .const import dateCol, m1601Col, m2601Col, m3601Col, ma1605Col, ma2605Col, _ymFilePath_, _performanceSummaryFilePath_, _file_path_map
+from .const import dateCol, m1601Col, m2601Col, m3601Col, ma1605Col, ma2605Col, _ymFilePath_, _performanceSummaryFilePath_, file_path_map
 
 def save_one_day_data_to_excel(filePath = _performanceSummaryFilePath_, oneDayDataDict = {}):
     # print(filePath)
@@ -49,9 +49,9 @@ def save_one_day_data_to_excel(filePath = _performanceSummaryFilePath_, oneDayDa
 
 #     return summaryDf[summaryDf[dateCol] >= fromDate][summaryDf[dateCol] <= toDate]
 
-def load_dataframe_to_view(type = 'performance', from_to_date={'fromDate':'', 'toDate': ''}):
+def load_dataframe_to_view(type = PERFORMANCE, from_to_date={'fromDate':'', 'toDate': ''}):
     # print(filePath)
-    filePath = _file_path_map[type]
+    filePath = file_path_map[type]
 
     try:
         summaryDf = pd.read_excel(filePath)
@@ -97,7 +97,7 @@ def load_ym_to_view(filePath = _ymFilePath_, from_to_date = {'fromDate': '', 'to
     return ymDf[ymDf[dateCol] >= fromDate][ymDf[dateCol] <= toDate]
 
 def get_machine_list_to_show():
-    machine_list = list(load_ym_to_view().columns)[1:]
+    machine_list = list(load_dataframe_to_view(type='yeildmonth')().columns)[1:]
     # print('get machine list', machine_list)
     return machine_list
 

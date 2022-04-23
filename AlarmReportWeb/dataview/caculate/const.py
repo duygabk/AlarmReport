@@ -26,12 +26,15 @@ _ymFilePath_ = os.getcwd() + "/dataview/outputs/ym_summary.xlsx"
 alarmFileHead = "Denka Alarm Daily Report"
 
 # Short stop time
-_short_stop_time_ = pd.Timedelta(minutes = 10)
+short_stop_time = pd.Timedelta(minutes = 10)
 _shortStopTimeFilePath_ = os.getcwd() + "/dataview/outputs/short_stop_summary.xlsx"
 
 # file path map dict
-_file_path_map = {
-    'performance': _performanceSummaryFilePath_,
-    'yieldmonth': _ymFilePath_,
-    'shortstop': _shortStopTimeFilePath_ 
+YIELDMONTH = 'yieldmonth'
+PERFORMANCE = 'performance'
+SHORTSTOP = 'shortstop'
+file_path_map = {
+    PERFORMANCE: _performanceSummaryFilePath_,
+    YIELDMONTH: _ymFilePath_,
+    SHORTSTOP: _shortStopTimeFilePath_ 
 }
