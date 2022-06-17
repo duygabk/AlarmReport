@@ -31,6 +31,7 @@ _shortStopTimeFilePath_ = os.getcwd() + "/dataview/outputs/short_stop_summary.xl
 PERFORMANCE = 'performance'
 YIELDMONTH = 'yieldmonth'
 SHORTSTOP = 'shortstop'
+
 _file_path_map = {
     PERFORMANCE: _performanceSummaryFilePath_,
     YIELDMONTH: _ymFilePath_,
