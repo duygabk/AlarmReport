@@ -3,10 +3,11 @@
 {% block title %}Chart v2 by HighCharts{% endblock %}
 
 {% block script_head %}
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    {%load static%}
+    <script src="{% static 'highcharts/highcharts.js' %}"></script>
+    <script src="{% static 'highcharts/exporting.js' %}"></script>
+    <script src="{% static 'highcharts/export-data.js' %}"></script>
+    <script src="{% static 'highcharts/accessibility.js' %}"></script>
 {% endblock %}
 
 {% block style %}
@@ -15,7 +16,7 @@
             height: auto;
         }
 
-        .highcharts-figure,
+        /* .highcharts-figure, */
         .highcharts-data-table table {
             min-width: 310px;
             max-width: 800px;
@@ -24,6 +25,11 @@
 
         .highcharts-figure {
             float: left;
+        }
+
+        #bar-chart-container {
+            width: 100%;
+            height: 100%;
         }
 
         .highcharts-data-table table {
@@ -94,7 +100,7 @@
                 <form action="/dataview/chart_v2/" method="post">
                     {% csrf_token %}
                 
-                    <label for="machineID">Select Machine</label>
+                    <label for="machineID" class="mt-3">Select Machine</label>
                     <select class="custom-select" name="machine" id="machineID" onchange="this.form.submit()">
                         {% for machine in machines %}
                         <option value="{{machine}}" {% if machine == select %} selected {% endif %}>{{machine}}</option>
@@ -109,12 +115,13 @@
                     </select>
                     <!-- <input type="submit" class="btn btn-primary" value="Submit"> -->
                     <div class="mt-3">
-                        <h5>Select date:</h5>
+                        <!-- <p>Select date:</p> -->
                         <label for="datepicker">From:</label>
                         <input type="date" name="from_date" id="datepicker" value="{{from_to_date.fromDate}}" class="form-control" onchange="this.form.submit()">
                         <label for="datepicker2">To:</label>
                         <input type="date" name="to_date" id="datepicker2" value="{{from_to_date.toDate}}" class="form-control" onchange="this.form.submit()">
-                        <input class="btn  btn-success" type="submit" value="Filter">                   
+                        <input class="btn  btn-success" type="submit" value="Filter"/> 
+                        <input class="btn btn-primary float-right" id="downloadBtn" type="button" value="Download"/>                  
                     </div>
                 </form>
             </div>
@@ -122,7 +129,6 @@
     </div>
     <div class="col">
         <div class="container">
-          
             <div class="row">
                 <div class="col-5" id="regress-chart-id">
                     <!-- Data map table -->
@@ -161,16 +167,32 @@
                     </figure>
                 </div>
             </div>
-            
-         
-            <figure class="highcharts-figure">
-                <div id="line-chart-container"></div>
-                <p class="highcharts-description">
-                    <!-- {{select}} -->
-                </p>
-            </figure>                
-          
-        </div>
+            <!-- Line chart, Machine Occupancy Rate -->
+            <div class="row">
+                <div class="container">
+                    <figure class="highcharts-figure">
+                        <div id="line-chart-container"></div>
+                        <p class="highcharts-description">
+                            <!-- {{select}} -->
+                        </p>
+                    </figure>   
+                </div>
+            </div>
+            <!-- Bar chart -->
+            <div class="row">
+                <div class="container">
+                    <figure class="highcharts-figure">
+                        <div id="bar-chart-container"></div>
+                        <p class="highcharts-description">
+                            <!-- {{select}} -->
+                        </p>
+                    </figure>  
+                </div>
+                {% if chart_type == 'bar' %}
+                <button type="button" class="btn btn-primary btn-large btn-block" id="detail_btn">Show Detail</button>
+                {% endif %}
+            </div>              
+        <!-- </div> -->
 
     </div>
 </div>
@@ -184,15 +206,29 @@
         var regressionData = {{ regression }};
         var scratterData = {{ scratter }};
         var machine = '{{select}}';
-        var line_data_json = String.raw`{{ line_chart_data|safe }}`;
-        var line_chart_data = JSON.parse(line_data_json); // type: Object
+
         var chart_type = document.getElementById("chart_typeID").value;
         var regression_chart_ele = document.getElementById("chart-container");
         var line_chart_ele = document.getElementById("line-chart-container");
         var regression_div_ele = document.getElementById("regress-chart-id");
+        var bar_chart_ele = document.getElementById("bar-chart-container");
         
+        if (chart_type === "line" || chart_type === "bar"){
+            var line_data_json = String.raw`{{ chart_data|safe }}`;
+            var chart_data = JSON.parse(line_data_json); // type: Object
+            chart_series = [];
+            machines_arr = Object.keys(chart_data).filter(x => x != 'Date');
+            machines_arr.forEach(function(key){
+                chart_series.push({
+                    name: key,
+                    data: chart_data[key]
+                });
+            });
+            console.log('line series', chart_series);
+        }
+
         // console.log(chart_type)
-        if (chart_type === "line") {
+        if (chart_type === "line" || chart_type === "bar") {
             console.log("Line");
             regression_chart_ele.style.setProperty('display', 'none');
             regression_div_ele.style.setProperty('display', 'none')
@@ -213,125 +249,207 @@
         })
 
         // console.log({regressionData}, {scratterData}, xAxisValues, yAxisValues)
-        // console.log('line chart data', line_chart_data,typeof(line_chart_data))
+        // console.log('line chart data', chart_data,typeof(chart_data))
         // BaseLine Chart Data
-        line_chart_series = [];
-        machines_arr = Object.keys(line_chart_data).filter(x => x != 'Date');
-        machines_arr.forEach(function(key){
-            line_chart_series.push({
-                name: key,
-                data: line_chart_data[key]
-            });
-        });
-        console.log('line series', line_chart_series);
-        // Regression Line
-        Highcharts.chart('chart-container', {
-            chart: {
-                height: 600,
-            },
-            title: {
-                text: 'Scatter plot with regression line'
-            },
-            xAxis: {
-                min: 0,
-                max: Math.max(...xAxisValues),
-            },
-            yAxis: {
-                min: 0,
-                max: Math.max(...yAxisValues)
-            },
-            series: [{
-                lineWidth: 3,
-                type: 'line',
-                color: '#9312e3',
-                name: 'Regression Line',
-                data: regressionData,
-                marker: {
-                    enabled: false
-                },
-                states: {
-                    hover: {
-                        lineWidth: 0
-                    }
-                },
-                enableMouseTracking: true
-            }, {
-                type: 'scatter',
-                name: 'Machine O.R <-> Production',
-                data: scratterData,
-                marker: {
-                    symbol: 'circle',
-                    radius: 5
-                }
-            }]
-        });
 
-        // Base Line
-        Highcharts.chart('line-chart-container', {
-            chart: {
-                type: 'line',
-                width: 1000,
-                height: 500
-            },
-            title: {
-                text: 'Occupancy Rate of Machine'
-            },
-        
-            subtitle: {
-                text: ''
-            },
-        
-            yAxis: {
+        // Regression Line
+        if( chart_type == 'regression' ) {
+            Highcharts.chart('chart-container', {
+                chart: {
+                    height: 600,
+                    // styledMode: true
+                },
                 title: {
-                    text: 'Machine O.R'
-                }
-            },
-        
-            xAxis: {
-                accessibility: {
-                    rangeDescription: 'Range: 2010 to 2017'
+                    text: 'Scatter plot with regression line'
                 },
-                categories: line_chart_data['Date']
-            },
-        
-            legend: {
-                layout: 'vertical',
-                align: 'right',
-                verticalAlign: 'middle'
-            },
-        
-            plotOptions: {
-                series: {
-                    label: {
-                        connectorAllowed: false
-                    },
-                    // pointStart: 15
+                xAxis: {
+                    min: 0,
+                    max: Math.max(...xAxisValues),
+                    gridLineWidth: 1
                 },
-                line: {
-                    dataLabels: {
-                        enabled: true
+                yAxis: {
+                    min: 0,
+                    max: Math.max(...yAxisValues),
+                    gridLineWidth: 1
+                },
+                series: [{
+                    lineWidth: 3,
+                    type: 'line',
+                    color: '#9312e3',
+                    name: 'Regression Line',
+                    data: regressionData,
+                    marker: {
+                        enabled: false
                     },
-                    // enableMouseTracking: false
-                }
-            },
-        
-            series: line_chart_series,
-        
-            responsive: {
-                rules: [{
-                    condition: {
-                        maxWidth: 1000
-                    },
-                    chartOptions: {
-                        legend: {
-                            layout: 'horizontal',
-                            align: 'center',
-                            verticalAlign: 'bottom'
+                    states: {
+                        hover: {
+                            lineWidth: 0
                         }
+                    },
+                    enableMouseTracking: true
+                }, {
+                    type: 'scatter',
+                    name: 'Machine O.R <-> Production',
+                    data: scratterData,
+                    marker: {
+                        symbol: 'circle',
+                        radius: 5
                     }
                 }]
-            }
-        
-        });
+            });
+        }
+        // Base Line
+        if (chart_type == 'line'){
+            Highcharts.chart('line-chart-container', {
+                chart: {
+                    type: 'line',
+                    width: 1000,
+                    height: 500
+                },
+                title: {
+                    text: 'Occupancy Rate of Machine'
+                },
+
+                tooltip: {
+                    headerFormat: '<b>{series.name}</b><br/>',
+                    pointFormat: '{point.category}: {point.y}'
+                },
+            
+                subtitle: {
+                    text: ''
+                },
+            
+                yAxis: {
+                    title: {
+                        text: 'Machine O.R'
+                    }
+                },
+            
+                xAxis: {
+                    accessibility: {
+                        rangeDescription: 'Range: 2010 to 2017'
+                    },
+                    categories: chart_data['Date']
+                },
+            
+                legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle'
+                },
+            
+                plotOptions: {
+                    series: {
+                        label: {
+                            connectorAllowed: false
+                        },
+                        // pointStart: 15
+                    },
+                    line: {
+                        dataLabels: {
+                            enabled: true
+                        },
+                        // enableMouseTracking: false
+                    }
+                },
+            
+                series: chart_series,
+            
+                responsive: {
+                    rules: [{
+                        condition: {
+                            maxWidth: 1000
+                        },
+                        chartOptions: {
+                            legend: {
+                                layout: 'horizontal',
+                                align: 'center',
+                                verticalAlign: 'bottom'
+                            }
+                        }
+                    }]
+                }
+            });
+        }
+        // Short time stop get data
+        if(chart_type == 'bar') {
+        // Bar chart --> display short time stop
+            Highcharts.chart('bar-chart-container', {
+                chart: {
+                    type: 'column',
+                    width: 1000,
+                    height: 500
+                },
+                title: {
+                    text: 'Short time Stop'
+                },
+                subtitle: {
+                    text: 'Stop time <= 10 minutes'
+                },
+                xAxis: {
+                    categories: chart_data['Date'],
+                    crosshair: true
+                },
+                yAxis: {
+                    min: 0,
+                    title: {
+                        text: '<10min Stop times'
+                    }
+                },
+                tooltip: {
+                    headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+                    pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                        '<td style="padding:0"><b>{point.y:.1f} times</b></td></tr>',
+                    footerFormat: '</table>',
+                    shared: true,
+                    useHTML: true
+                },
+                plotOptions: {
+                    column: {
+                        pointPadding: 0.2,
+                        borderWidth: 0
+                    }
+                },
+                series: chart_series,
+            });
+        }
+
+    // Download data btn click handler
+    downloadBtnEle = document.getElementById("downloadBtn");
+    downloadBtn.addEventListener ("click", function(){
+        fromDate = document.querySelector('[name = from_date]').value;
+        toDate = document.querySelector('[name = to_date]').value;
+        // console.log("Click Download Btn", fromDate)
+        chart_name = ''
+        switch(chart_type){
+            case 'regression':
+                chart_name = 'RegressionLine-Map-Data';
+                break;
+            case 'line':
+                chart_name = 'Machine-Occupancy_Rate';
+                break;
+            case 'bar':
+                chart_name = 'Short-Time-Stop';
+                break;
+            default:
+                chart_name = 'Chart-Data';
+        }
+        filename = `${chart_name}_${make_from_to_date(fromDate, toDate)}.xlsx`
+        // Fetch to request file
+        fecthDownloadExcel(filename);
+        })
+
+    detailBtnEle = document.getElementById("detail_btn");
+    detailBtnEle.addEventListener('click', function(){
+        console.log("Detail ......");
+        // fetch to handler service
+        fetch('/dataview/chart_v2/get_ss_detail/',{
+            method: 'GET',
+        }).then(res => console.log(res))
+
+        // Redirect to Chart detail page
+        window.location.replace('/dataview/chart_v2/chart_detail');
+
+    })
     </script>
 {% endblock %}

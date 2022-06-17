@@ -3,4 +3,4 @@ from django.http import HttpResponseRedirect
 
 
 def index(request):
-    return HttpResponseRedirect('/dataview')
+    return HttpResponseRedirect('/dataview/summary/')

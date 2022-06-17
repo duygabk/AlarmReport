@@ -20,12 +20,15 @@
                         </select>
                         <!-- Date select field -->
                         <div class="">
-                            <h5>Select date:</h5>
+                            <!-- <h5>Select date:</h5> -->
                             <label for="datepicker">From:</label>
-                            <input type="date" name="from_date" id="datepicker" value="{{from_to_date.fromDate}}" class="form-control">
+                            <input type="date" name="from_date" id="datepicker" value="{{from_to_date.fromDate}}" class="form-control" onchange="this.form.submit()">
                             <label for="datepicker2">To:</label>
-                            <input type="date" name="to_date" id="datepicker2" value="{{from_to_date.toDate}}" class="form-control">
-                            <input class="btn  btn-success" type="submit" value="Filter">                   
+                            <input type="date" name="to_date" id="datepicker2" value="{{from_to_date.toDate}}" class="form-control" onchange="this.form.submit()">
+                            <!-- <button class="btn  btn-success" type="submit">Filter</button>        -->
+                            <button id="downloadBtn" class="btn  btn-success float-right" type="button" onclick="downloadFunc()">Download</button>  
+                            <!-- {% load static %} 
+                            <a href="{% static '/book1.xlsx' %}" download="name__.xlsx">test download</a>             -->
                         </div>
                     </form>
                 </div>
@@ -61,18 +64,20 @@
 
 {% block script_tail %}
     <script>
-        // table = document.getElementById("summary_table");
-        // rows = table.getElementsByTagName("tr");
-        // // console.log(rows)
-        // for (i = 1; i < rows.length; i++){
-        //     row = table.rows[i];
-        //     row.ondblclick = function() {
-        //         var cell =  this.getElementsByTagName("td")[0];
-        //         var date = cell.innerHTML;
-        //         var submit = confirm(date)
-        //         console.log(submit, date)
-        //     }
-        // }
+        // Download file handler
+        function downloadFunc(){
+            console.log("Download File...");
+            select = document.getElementsByName("summarySelect")[0];
+            selectedData = select.options[select.selectedIndex].value;
+            fromDate = document.querySelector('[name = from_date]').value;
+            toDate = document.querySelector('[name = to_date]').value;
+            // console.log({fromDate, toDate});
+
+            filename = `${selectedData}_${make_from_to_date(fromDate, toDate)}.xlsx`
+            // Fetch to request file
+            fecthDownloadExcel(filename);
+        }
+
         function delFunc(){
             console.log("delete");
             // rowParent = this.parentElement.parentElement;
@@ -91,23 +96,7 @@
                 
             }
         }
-        // Add Event Listener for delete button
-        table = document.getElementById('summary_table');
-        rows = table.getElementsByTagName('tr');
-        // console.log(rows)
-        // for (i = 1; i < rows.length; i++){
-        //     row = rows[i];
-        //     rowDate = row.getElementsByTagName('td')[0].innerHTML;
 
-        //     delLink = row.getElementsByTagName('a')[0];
-        //     // console.log(delLink)
-        //     delLink.setAttribute('href', '/dataview/del/?date=' + rowDate)
-        //     delLink.onclick = function(e){
-        //         e.preventDefault();
-        //         console.log(i)
-        //         // confirmDel = confirm('Are you sure delete this item ' + rowDate)
-        //     }
-        // }
 
         function onClickHandler(date){
             console.log(date)

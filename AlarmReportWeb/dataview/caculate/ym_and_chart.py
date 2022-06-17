@@ -1,3 +1,4 @@
+from traceback import print_tb
 from typing import final
 import pandas as pd
 import openpyxl
@@ -6,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import stats
 import json
-from .const import dateCol, m1601Col, m2601Col, m3601Col, ma1605Col, ma2605Col, _ymFilePath_, _performanceSummaryFilePath_, _file_path_map
+from .const import PERFORMANCE, SHORTSTOP, YIELDMONTH, dateCol, m1601Col, m2601Col, m3601Col, ma1605Col, ma2605Col, _ymFilePath_, _performanceSummaryFilePath_, _file_path_map
 
 def save_one_day_data_to_excel(filePath = _performanceSummaryFilePath_, oneDayDataDict = {}):
     # print(filePath)
@@ -36,23 +37,14 @@ def save_one_day_data_to_excel(filePath = _performanceSummaryFilePath_, oneDayDa
         finally:
             # print('Write Performance to Excel OK')
             return True
-
-# def load_performance_to_view(filePath = _performanceSummaryFilePath_, from_to_date={'fromDate':'', 'toDate': ''}):
-#     # print(filePath)
-#     summaryDf = pd.read_excel(filePath)
-#     summaryDf[dateCol] = pd.to_datetime(summaryDf[dateCol]).dt.date
-
-#     # filter by from_to_date
-#     fromDate = pd.to_datetime(from_to_date['fromDate']).date() if from_to_date['fromDate'] != '' else summaryDf.iloc[0][dateCol]
-
-#     toDate = pd.to_datetime(from_to_date['toDate']).date() if from_to_date['toDate'] != '' else summaryDf.iloc[-1][dateCol]
-
-#     return summaryDf[summaryDf[dateCol] >= fromDate][summaryDf[dateCol] <= toDate]
-
-def load_dataframe_to_view(type = 'performance', from_to_date={'fromDate':'', 'toDate': ''}):
+# Load dataframe from saved excel file, filter by date
+def load_dataframe_to_view(type = PERFORMANCE, from_to_date={'fromDate':'', 'toDate': ''}):
     # print(filePath)
     filePath = _file_path_map[type]
 
+    # Check file exist
+    if os.path.exists(filePath) == False:
+        return False
     try:
         summaryDf = pd.read_excel(filePath)
     except Exception as e:
@@ -70,7 +62,14 @@ def load_dataframe_to_view(type = 'performance', from_to_date={'fromDate':'', 't
 
 # Read Yeild Month File and return DataFrame
 def read_ym_to_Df(filePath):
-    ymDf = pd.read_excel(filePath, sheet_name = '4-2022')
+    # Edit 20/05/2022 Read last sheet to get lastest data
+    try:
+        xl = pd.ExcelFile(filePath)
+    except Exception as e:
+        print("Read YM Error: ", e)
+        return { 'error': True, 'message': e }
+    # ymDf = pd.read_excel(filePath, sheet_name = '4-2022')
+    ymDf = xl.parse(xl.sheet_names[-1]) # read last sheet to Data Frame
     # Rename Columns as Machine Name
     ymDf.rename(columns={'YM1601': m1601Col, 'YM1605': ma1605Col, 'YM2601': m2601Col, 'YM2605': ma2605Col, 'YM3601': m3601Col}, inplace = True)
     # ymDf.columns = [dateCol, m1601Col, ma1605Col, m2601Col, ma2605Col, m3601Col]
@@ -78,7 +77,7 @@ def read_ym_to_Df(filePath):
     ymDf.dropna(axis=0, thresh=4, inplace=True)
     ymDf.dropna(axis=1, thresh=3, inplace=True)
 
-    return ymDf
+    return { 'error': False,'data': ymDf }
 
 # Save Yeild Month to Excel File as DataBase
 def save_ym_to_excel(ymDf):
@@ -87,17 +86,8 @@ def save_ym_to_excel(ymDf):
     ymDf.to_excel(_ymFilePath_, index = False)
     return
 
-def load_ym_to_view(filePath = _ymFilePath_, from_to_date = {'fromDate': '', 'toDate': ''}):
-    ymDf = pd.read_excel(filePath)
-    ymDf[dateCol] = pd.to_datetime(ymDf[dateCol]).dt.date
-
-    fromDate = pd.to_datetime(from_to_date['fromDate']).date() if from_to_date['fromDate'] != '' else ymDf.iloc[0][dateCol]
-    toDate = pd.to_datetime(from_to_date['toDate']).date() if from_to_date['toDate'] != '' else ymDf.iloc[-1][dateCol]
-
-    return ymDf[ymDf[dateCol] >= fromDate][ymDf[dateCol] <= toDate]
-
 def get_machine_list_to_show():
-    machine_list = list(load_ym_to_view().columns)[1:]
+    machine_list = list(load_dataframe_to_view(type = YIELDMONTH).columns)[1:]
     # print('get machine list', machine_list)
     return machine_list
 
@@ -107,9 +97,8 @@ def get_machine_list_to_show():
 def map_performance_ym_by_date(selectedMachine = [], from_to_date = {'fromDate': '', 'toDate': ''}):
     
     # filter from_to_date
-    performanceDf = load_dataframe_to_view(type='performance', from_to_date = from_to_date)
-    # ymDf = load_ym_to_view()
-    ymDf = load_dataframe_to_view(type='yieldmonth', from_to_date = from_to_date)
+    performanceDf = load_dataframe_to_view(type = PERFORMANCE, from_to_date = from_to_date)
+    ymDf = load_dataframe_to_view(type = YIELDMONTH, from_to_date = from_to_date)
     # machineList = list(ymDf.columns)[1:]
     # print(machineList)
 
@@ -177,19 +166,20 @@ def load_data_for_chart_v2_by_machine_date(machine, from_to_date):
 
 # print base line chart by Highcharts js
 # return dict {'Date': [,,,], 'M1601': [0.3, 0.5....]}
-def load_line_chart_data_filter_by_date(machineList, from_to_date):
+def load_chart_data_filter_by_date(type = PERFORMANCE, machineList = [], from_to_date = {'fromDate':'', 'toDate': ''}):
     # Get machine performance filter by date
-    performDf = load_dataframe_to_view(type='performance', from_to_date = from_to_date)
+    if type not in _file_path_map.keys():
+        return False
+    performDf = load_dataframe_to_view(type = type, from_to_date = from_to_date)
     # Get require columns --> Data||M1601||MA1605....
     # getColumns = machineList.copy() # copy list values
     machineListCopy = list(machineList) # create copy of origin list
-    # machineListCopy.insert(0, dateCol)
 
     # response = performDf.to_dict('split')
     response = {}
-    for col in machineListCopy:
-        response[col] = performDf[col].to_list()
     response[dateCol] = performDf[dateCol].astype(str).to_list()
+    for col in machineListCopy:
+        response[col] = performDf[col].to_list()    
 
     # return json format
     res_json = json.dumps(response)

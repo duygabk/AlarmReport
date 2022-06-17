@@ -1,14 +1,8 @@
-# import os
-import os
-import openpyxl
 import pandas as pd
 import numpy as np
 from datetime import datetime
 # from readLog import caculate_performance
-from .const import sourceCol, timeCol, messageCol, alarmFolder, severityCol, dateCol, alarmFileHead, _short_stop_time_
-
-# listObject = os.listdir(alarmFolder)
-# filePath = alarmFolder + '/' + listObject[-5]
+from .const import sourceCol, timeCol, messageCol, severityCol, dateCol, alarmFileHead, _short_stop_time_, _machine_list_
 
 def alarm_seperate_by_machine(logs):
 
@@ -39,12 +33,13 @@ def alarm_seperate_by_machine(logs):
     # print(logMachine)
     return logMachine, machineName
 
-def caculate_stop_time(logOneMachine):
+def caculate_stop_time(logOneMachine, machine):
 
     stopTime = pd.Timedelta(0)
     # Add 23/4/2022
     # Count short stop time
     shortStopCount = 0
+    totalStopCount = 0
 
     #Filter by Severity 300 RUN/STOP messages
     severity300 = logOneMachine[logOneMachine[severityCol] == 300]
@@ -61,7 +56,9 @@ def caculate_stop_time(logOneMachine):
     logLen = len(severity300)
     ## To show detail info
     # [dataStopTime, dataStopMessage, dataRunTime, dataRunMessage] = [[], [], [], []]
-
+    # Get Short Stop detail info
+    ss_from_stop, ss_to_start, ss_count = 0, 0, 0
+    ss_detail_dict = {'times': [], 'from STOP': [], 'to RUN': []}
     for x in stopIndexs:
         if x >= (logLen - 1):
             break
@@ -90,8 +87,17 @@ def caculate_stop_time(logOneMachine):
 
         stopTime += deltaT
         # add 23/04/2022 --> short stop counter
-        if deltaT <= _short_stop_time_: 
-            shortStopCount += 1
+        totalStopCount += 1
+        # only machine of finishing line
+        if machine in _machine_list_:
+            if deltaT <= _short_stop_time_: 
+                shortStopCount += 1
+                ss_from_stop = pd.to_datetime(severity300.iloc[x][timeCol]).time().strftime("%H:%M:%S")
+                ss_to_start = pd.to_datetime(severity300.iloc[findRun][timeCol]).time().strftime("%H:%M:%S")
+                ss_detail_dict['times'].append(shortStopCount)
+                ss_detail_dict['from STOP'].append(ss_from_stop)
+                ss_detail_dict['to RUN'].append(ss_to_start)
+        
         #End of the alarm report, finish
         if endLoop == True:
             break
@@ -113,8 +119,16 @@ def caculate_stop_time(logOneMachine):
     # print(operatedTime.total_seconds(), stopTime.total_seconds(), performance)
     performance = round(performance, 3)
 
-    # return tuple contain machine performance and short-stop-time counter
-    return performance, shortStopCount
+    #debug
+    # if machine in _machine_list_:
+    #     print(ss_detail_dict)
+    ss_summary_dict = {
+        'ss_count': shortStopCount,
+        'total': totalStopCount,
+        'detail': ss_detail_dict
+    }
+    # return tuple contain machine performance and short stop detail time dict, total stop counter
+    return performance, ss_summary_dict
 
 def summary_performace_by_day(filePath):
 
@@ -141,46 +155,24 @@ def summary_performace_by_day(filePath):
 
     for name in nameAllMachine:
         # print(name)
-        perform, shortStopCount = caculate_stop_time(logAllMachine[name])
+        perform, ss_summary_dict = caculate_stop_time(logAllMachine[name], machine = name)
         performanceSumDict[name] = [perform]
-        shortTimeStopDict[name]  = [shortStopCount]
+        if name in _machine_list_:
+            shortTimeStopDict[name] = [ss_summary_dict]
     # Return 2 dict as {'Date': [2022-04-11], 'M1601': [0.85], 'M2601': [0.3] ...}
     # and short time stop dict {'Date': [2022-04-11], 'M1601': [5], 'M2601': [25] ...}
     # print('summary by day function: ', performanceSumDict)
     return performanceSumDict, shortTimeStopDict
 
-def summary_performance_by_month(listFile):
-    
-    monthSummaryList = []
-    completeNum = len(listFile)
-    percentRun = 0
-    for oneFile in listFile:
-        print("Caculating.... ", percentRun, '/', completeNum)
-        percentRun += 1
-        filePath = alarmFolder + oneFile
-        # print(onedaySummaryDf)
-        onedaySummaryDf = pd.DataFrame(summary_performace_by_day(filePath))
-        # print(onedaySummaryDf)
-        monthSummaryList.append(onedaySummaryDf)   
-             
-    monthSummaryDf = pd.concat(monthSummaryList)
-    monthSummaryDf.fillna(0, inplace = True)
-    print(monthSummaryDf)
-    return monthSummaryDf
-
-
 # Check Alarm File name --> Incorrect return Error Message
-def check_file_name(filePaths):
-    # Check Alarm File name
-    # print(type(filePaths))
-    # filenameStr = [str(f) for f in filePaths]
+def check_file_name(filePaths, headText = alarmFileHead ):
 
-    alarmFilesFiltered = [f for f in filePaths if str(f).startswith(alarmFileHead) == True]
+    alarmFilesFiltered = [f for f in filePaths if str(f).startswith(headText) == True]
 
     if len(alarmFilesFiltered) == 0:
         return {
             'error': True,
-            'message': 'Invalid Alarm Report File Name!!!'
+            'message': 'Invalid Required File Name!!!'
         }
 
     return {
@@ -188,8 +180,3 @@ def check_file_name(filePaths):
         'message': 'No Error',
         'files': alarmFilesFiltered
     }
-
-# Return list of file with alarmFileName
-# input: list of file uploaded
-def filter_alarm_files(filePaths):
-    return [f for f in filePaths if str(f).startswith(alarmFileHead) == True]

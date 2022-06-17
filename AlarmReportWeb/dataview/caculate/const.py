@@ -6,11 +6,6 @@ statusCol = "Status"
 messageCol = "Message"
 severityCol = "Severity"
 sourceCol = "Original source"
-machineCol = "Machine"
-unknownCol = "What"
-alarmFolder = './AlarmFiles/'
-outputFolder = './OutputFiles/'
-yeildFolder = './YeildFiles/'
 
 # Summary output file path
 _performanceSummaryFilePath_ = os.getcwd() + "/dataview/outputs/performance_summary.xlsx"
@@ -22,16 +17,22 @@ ma1605Col = "MA1605"
 ma2605Col = "MA2605"
 _ymFilePath_ = os.getcwd() + "/dataview/outputs/ym_summary.xlsx"
 
+_machine_list_ = [m1601Col, m2601Col, m3601Col, ma1605Col, ma2605Col]
+
 # FileName check
 alarmFileHead = "Denka Alarm Daily Report"
+ymFileHead = "YieldMonth_Finishing"
 
 # Short stop time
 _short_stop_time_ = pd.Timedelta(minutes = 10)
 _shortStopTimeFilePath_ = os.getcwd() + "/dataview/outputs/short_stop_summary.xlsx"
 
 # file path map dict
+PERFORMANCE = 'performance'
+YIELDMONTH = 'yieldmonth'
+SHORTSTOP = 'shortstop'
 _file_path_map = {
-    'performance': _performanceSummaryFilePath_,
-    'yieldmonth': _ymFilePath_,
-    'shortstop': _shortStopTimeFilePath_ 
+    PERFORMANCE: _performanceSummaryFilePath_,
+    YIELDMONTH: _ymFilePath_,
+    SHORTSTOP: _shortStopTimeFilePath_ 
 }
